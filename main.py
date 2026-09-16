@@ -244,7 +244,7 @@ st.markdown("---")
 # ==============================================================================
 st.subheader("📌 구역 4: 기간 내 일관객 합계 TOP 10 영화")
 
-# 영화별 일관객 합계 및 10위권 진입 일수(데이터 행 수) 집계
+# 영화별 일관객 합계 및 10위권 진입 일수 집계
 top10_df = (
     df.groupby('영화명')
     .agg(
@@ -253,11 +253,10 @@ top10_df = (
     )
     .reset_index()
     .nlargest(10, '총일관객')
-    .sort_values('총일관객', ascending=True)  # Plotly 가로 막대는 아래서부터 그려지므로 ascending=True로 놓아야 1위가 상단에 위치함
+    .sort_values('총일관객', ascending=True)
 )
 
 if not top10_df.empty:
-    # 가로 막대그래프 생성
     fig4 = px.bar(
         top10_df,
         x='총일관객',
@@ -270,7 +269,6 @@ if not top10_df.empty:
         color_continuous_scale='Blues'
     )
     
-    # 막대에 마우스 올렸을 때 보여줄 정보(툴팁) 및 막대 텍스트 설정
     fig4.update_traces(
         texttemplate='%{x:,}명',
         textposition='outside',
@@ -283,14 +281,11 @@ if not top10_df.empty:
         height=500,
         xaxis=dict(showgrid=True, tickformat=","),
         yaxis=dict(title=""),
-        coloraxis_showscale=False,  # 컬러바 숨김
+        coloraxis_showscale=False,
         margin=dict(l=20, r=50, t=60, b=20)
     )
     
-    # 그래프 출력
     st.plotly_chart(fig4, use_container_width=True)
-
-    # 문구 입력용 자리
     st.info("💡 **이 그래프로 알 수 있는 것**\n\n*(작성할 문구를 입력하세요)*")
 else:
     st.warning("데이터를 불러올 수 없습니다.")
@@ -298,13 +293,71 @@ else:
 st.markdown("---")
 
 # ==============================================================================
-# [구역 5] 그래프 추가 구역 (확장용)
+# [구역 5] 월x요일별 일관객 합계 히트맵
 # ==============================================================================
-st.subheader("📌 구역 5: (그래프 추가 예정 구역)")
+st.subheader("📌 구역 5: 월×요일별 일관객 합계 히트맵")
+
+# 날짜 데이터에서 월 및 요일 추출
+heatmap_df = df.copy()
+heatmap_df['월'] = heatmap_df['날짜'].dt.month.astype(str) + "월"
+heatmap_df['요일'] = heatmap_df['날짜'].dt.day_name()
+
+# 요일 한글 변환 및 순서 정의
+weekday_map = {
+    'Monday': '월요일', 'Tuesday': '화요일', 'Wednesday': '수요일',
+    'Thursday': '목요일', 'Friday': '금요일', 'Saturday': '토요일', 'Sunday': '일요일'
+}
+heatmap_df['요일'] = heatmap_df['요일'].map(weekday_map)
+days_order = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일']
+
+# 월 순서 정렬을 위한 카테고리 설정 (1월 ~ 12월)
+months_order = [f"{m}월" for m in range(1, 13)]
+
+# 월x요일별 일관객 합계 피벗 테이블 생성
+pivot_df = heatmap_df.pivot_table(
+    index='월',
+    columns='요일',
+    values='일관객',
+    aggfunc='sum'
+).reindex(index=months_order, columns=days_order).dropna(how='all')
+
+if not pivot_df.empty:
+    fig5 = px.imshow(
+        pivot_df,
+        labels=dict(x="요일", y="월", color="총 관객 수"),
+        x=pivot_df.columns,
+        y=pivot_df.index,
+        color_continuous_scale="Blues",
+        title="<b>월×요일별 일관객 합계 분포</b>"
+    )
+    
+    # 셀 내부 텍스트 표시 및 툴팁 설정
+    fig5.update_traces(
+        text=pivot_df.applymap(lambda v: f"{v:,.0f}명" if pd.notnull(v) else ""),
+        texttemplate="%{text}",
+        hovertemplate="<b>월:</b> %{y}<br><b>요일:</b> %{x}<br><b>총 일관객:</b> %{z:,}명<extra></extra>"
+    )
+    
+    fig5.update_layout(
+        template="plotly_white",
+        height=550,
+        xaxis=dict(title="요일"),
+        yaxis=dict(title="월", autorange="reversed"),
+        margin=dict(l=20, r=20, t=60, b=20)
+    )
+    
+    st.plotly_chart(fig5, use_container_width=True)
+    st.info("💡 **이 그래프로 알 수 있는 것**\n\n*(작성할 문구를 입력하세요)*")
+else:
+    st.warning("데이터를 불러올 수 없습니다.")
+
+st.markdown("---")
+
+# ==============================================================================
+# [구역 6] 그래프 추가 구역 (확장용)
+# ==============================================================================
+st.subheader("📌 구역 6: (그래프 추가 예정 구역)")
 st.caption("향후 시간에 따른 영화 데이터를 시각화하는 그래프가 추가될 위치입니다.")
 
-# 임시 시각화 자리
 st.write("*(그래프 들어갈 자리)*")
-
-# 문구 입력용 자리
 st.info("💡 **이 그래프로 알 수 있는 것**\n\n*(작성할 문구를 입력하세요)*")
