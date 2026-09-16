@@ -331,9 +331,9 @@ if not pivot_df.empty:
         title="<b>월×요일별 일관객 합계 분포</b>"
     )
     
-    # 셀 내부 텍스트 표시 및 툴팁 설정
+    # 셀 내부 텍스트 표시 및 툴팁 설정 (.applymap -> .map 수정 완료)
     fig5.update_traces(
-        text=pivot_df.applymap(lambda v: f"{v:,.0f}명" if pd.notnull(v) else ""),
+        text=pivot_df.map(lambda v: f"{v:,.0f}명" if pd.notnull(v) else ""),
         texttemplate="%{text}",
         hovertemplate="<b>월:</b> %{y}<br><b>요일:</b> %{x}<br><b>총 일관객:</b> %{z:,}명<extra></extra>"
     )
