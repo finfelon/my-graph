@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 # 1. 페이지 기본 설정
 st.set_page_config(
@@ -156,9 +157,92 @@ else:
 st.markdown("---")
 
 # ==============================================================================
-# [구역 3] 그래프 추가 구역 (확장용)
+# [구역 3] 날짜별 10위권 일관객 합계 영역 그래프
 # ==============================================================================
-st.subheader("📌 구역 3: (그래프 추가 예정 구역)")
+st.subheader("📌 구역 3: 날짜별 10위권 일관객 합계 동향")
+
+# 날짜별 일관객 합계 계산
+daily_sum = df.groupby('날짜')['일관객'].sum().reset_index().sort_values('날짜')
+
+if not daily_sum.empty:
+    # 영역 그래프 생성
+    fig3 = px.area(
+        daily_sum,
+        x='날짜',
+        y='일관객',
+        title="<b>날짜별 10위권 일관객 합계 변화 및 최다 관객 Top 3일</b>",
+        labels={'날짜': '날짜', '일관객': '10위권 총 관객 수(명)'}
+    )
+    
+    # 그래프 스타일링
+    fig3.update_traces(
+        line=dict(color='#2E86C1', width=2),
+        fillcolor='rgba(46, 134, 193, 0.3)',
+        hovertemplate="<b>날짜:</b> %{x|%Y-%m-%d}<br><b>10위권 총 관객:</b> %{y:,}명<extra></extra>"
+    )
+    
+    # 관객 수가 가장 컸던 Top 3일 추출
+    top3_days = daily_sum.nlargest(3, '일관객').sort_values('날짜')
+    
+    # Top 3일 포인트 강조 (다이아몬드 마커 추가)
+    fig3.add_trace(
+        go.Scatter(
+            x=top3_days['날짜'],
+            y=top3_days['일관객'],
+            mode='markers+text',
+            name='Top 3일',
+            marker=dict(color='#E74C3C', size=10, symbol='diamond'),
+            text=[d.strftime('%Y-%m-%d') for d in top3_days['날짜']],
+            textposition='top center',
+            hovertemplate="<b>🏆 Top 3 날짜:</b> %{x|%Y-%m-%d}<br><b>총 관객:</b> %{y:,}명<extra></extra>",
+            showlegend=False
+        )
+    )
+    
+    # 주석(Annotation)으로 Top 3일 날짜 및 관객 수 강조 표기
+    for _, row in top3_days.iterrows():
+        date_str = row['날짜'].strftime('%Y-%m-%d')
+        fig3.add_annotation(
+            x=row['날짜'],
+            y=row['일관객'],
+            text=f"<b>{date_str}</b><br>({row['일관객']:,}명)",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=1.5,
+            arrowcolor="#E74C3C",
+            ax=0,
+            ay=-40,
+            bgcolor="rgba(255, 255, 255, 0.85)",
+            bordercolor="#E74C3C",
+            borderwidth=1.5,
+            borderpad=4,
+            font=dict(size=11, color="#900C3F")
+        )
+    
+    fig3.update_layout(
+        hovermode="x unified",
+        template="plotly_white",
+        height=500,
+        xaxis=dict(showgrid=True),
+        yaxis=dict(showgrid=True, tickformat=","),
+        margin=dict(l=20, r=20, t=60, b=20)
+    )
+    
+    # 그래프 출력
+    st.plotly_chart(fig3, use_container_width=True)
+
+    # 문구 입력용 자리
+    st.info("💡 **이 그래프로 알 수 있는 것**\n\n*(작성할 문구를 입력하세요)*")
+else:
+    st.warning("데이터를 불러올 수 없습니다.")
+
+st.markdown("---")
+
+# ==============================================================================
+# [구역 4] 그래프 추가 구역 (확장용)
+# ==============================================================================
+st.subheader("📌 구역 4: (그래프 추가 예정 구역)")
 st.caption("향후 시간에 따른 영화 데이터를 시각화하는 그래프가 추가될 위치입니다.")
 
 # 임시 시각화 자리
