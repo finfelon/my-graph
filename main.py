@@ -184,7 +184,7 @@ if not daily_sum.empty:
     # 관객 수가 가장 컸던 Top 3일 추출
     top3_days = daily_sum.nlargest(3, '일관객').sort_values('날짜')
     
-    # Top 3일 포인트 강조 (다이아몬드 마커 추가)
+    # Top 3일 포인트 강조 (마커 추가)
     fig3.add_trace(
         go.Scatter(
             x=top3_days['날짜'],
@@ -199,7 +199,7 @@ if not daily_sum.empty:
         )
     )
     
-    # 주석(Annotation)으로 Top 3일 날짜 및 관객 수 강조 표기
+    # 주석(Annotations)으로 Top 3 강조 표기
     for _, row in top3_days.iterrows():
         date_str = row['날짜'].strftime('%Y-%m-%d')
         fig3.add_annotation(
@@ -240,9 +240,67 @@ else:
 st.markdown("---")
 
 # ==============================================================================
-# [구역 4] 그래프 추가 구역 (확장용)
+# [구역 4] 기간 내 일관객 합계 TOP 10 영화 가로 막대그래프
 # ==============================================================================
-st.subheader("📌 구역 4: (그래프 추가 예정 구역)")
+st.subheader("📌 구역 4: 기간 내 일관객 합계 TOP 10 영화")
+
+# 영화별 일관객 합계 및 10위권 진입 일수(데이터 행 수) 집계
+top10_df = (
+    df.groupby('영화명')
+    .agg(
+        총일관객=('일관객', 'sum'),
+        진입일수=('날짜', 'nunique')
+    )
+    .reset_index()
+    .nlargest(10, '총일관객')
+    .sort_values('총일관객', ascending=True)  # Plotly 가로 막대는 아래서부터 그려지므로 ascending=True로 놓아야 1위가 상단에 위치함
+)
+
+if not top10_df.empty:
+    # 가로 막대그래프 생성
+    fig4 = px.bar(
+        top10_df,
+        x='총일관객',
+        y='영화명',
+        orientation='h',
+        title="<b>기간 내 일관객 합계 TOP 10 영화 및 10위권 진입 일수</b>",
+        labels={'총일관객': '총 일관객 수(명)', '영화명': '영화 제목', '진입일수': '10위권 진입 일수'},
+        text='총일관객',
+        color='총일관객',
+        color_continuous_scale='Blues'
+    )
+    
+    # 막대에 마우스 올렸을 때 보여줄 정보(툴팁) 및 막대 텍스트 설정
+    fig4.update_traces(
+        texttemplate='%{x:,}명',
+        textposition='outside',
+        hovertemplate="<b>영화명:</b> %{y}<br><b>총 일관객:</b> %{x:,}명<br><b>10위권 진입 일수:</b> %{customdata[0]}일<extra></extra>",
+        customdata=top10_df[['진입일수']]
+    )
+    
+    fig4.update_layout(
+        template="plotly_white",
+        height=500,
+        xaxis=dict(showgrid=True, tickformat=","),
+        yaxis=dict(title=""),
+        coloraxis_showscale=False,  # 컬러바 숨김
+        margin=dict(l=20, r=50, t=60, b=20)
+    )
+    
+    # 그래프 출력
+    st.plotly_chart(fig4, use_container_width=True)
+
+    # 문구 입력용 자리
+    st.info("💡 **이 그래프로 알 수 있는 것**\n\n*(작성할 문구를 입력하세요)*")
+else:
+    st.warning("데이터를 불러올 수 없습니다.")
+
+st.markdown("---")
+
+# ==============================================================================
+# [구역 5] 그래프 추가 구역 (확장용)
+# ==============================================================================
+st.subheader("📌 구역 5: (그래프 추가 예정 구역)")
 st.caption("향후 시간에 따른 영화 데이터를 시각화하는 그래프가 추가될 위치입니다.")
 
 # 임시 시각화 자리
